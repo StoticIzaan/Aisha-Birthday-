@@ -91,10 +91,15 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
   // Automatic relock:
   // Once the 7:20 unlock period ends, close the scene if it is currently open.
   useEffect(() => {
-    if (activeApp === 'seventwenty' && !isSevenTwentyUnlocked) {
-      setActiveApp(null);
-    }
-  }, [currentTime, isSevenTwentyUnlocked, activeApp]);
+  if (
+    activeApp === 'seventwenty' &&
+    isSevenTwentyUnlocked === false &&
+    currentTime.getHours() === 21 &&
+    currentTime.getMinutes() === 20
+  ) {
+    setActiveApp(null);
+  }
+}, [currentTime, isSevenTwentyUnlocked, activeApp]);
 
   // Format system time for taskbar in 12-hour clock format
   const formattedTime = useMemo(() => {

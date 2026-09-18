@@ -5,7 +5,7 @@ import { playClockUnlockChime } from '../../utils/audio';
 
 /**
  * Checks if the system time falls within the 7:20 active window:
- * October 13, 2026 between 7:20 PM (19:20:00) and 9:20 PM (21:20:00)
+ * Every day between 7:20 PM (19:20:00) and 9:20 PM (21:20:00)
  */
 export const checkIsSevenTwentyUnlocked = (dateInput?: Date): boolean => {
   let now = dateInput || new Date();
@@ -20,15 +20,6 @@ export const checkIsSevenTwentyUnlocked = (dateInput?: Date): boolean => {
         now = parsed;
       }
     }
-  }
-
-  const year = now.getFullYear();
-  const month = now.getMonth(); // 9 = October (0-indexed)
-  const day = now.getDate();
-
-  // Must be October 13, 2026
-  if (year !== 2026 || month !== 9 || day !== 13) {
-    return false;
   }
 
   const hours = now.getHours();
@@ -88,13 +79,10 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
   // Handle automatic relock at exactly 9:20 PM:
   // If the special scene was open and the active window ends, trigger onAutoRelock
   useEffect(() => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const day = currentDate.getDate();
     const totalSec = currentDate.getHours() * 3600 + currentDate.getMinutes() * 60 + currentDate.getSeconds();
     const endSeconds = 21 * 3600 + 20 * 60; // 9:20:00 PM
 
-    if (year === 2026 && month === 9 && day === 13 && totalSec >= endSeconds) {
+    if (totalSec >= endSeconds) {
       if (onAutoRelock) {
         onAutoRelock();
       }
@@ -159,7 +147,7 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
           </div>
         </motion.div>
       ) : (
-        /* UNLOCKED SPECIAL SCENE: October 13, 2026, 7:20 PM - 9:20 PM */
+        /* UNLOCKED SPECIAL SCENE: Every day, 7:20 PM - 9:20 PM */
         <motion.div
           key="unlocked"
           initial={{ opacity: 0, scale: 0.94 }}

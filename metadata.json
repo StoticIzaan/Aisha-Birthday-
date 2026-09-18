@@ -1,0 +1,6 @@
+{
+  "name": "Aisha's Sweet 16",
+  "description": "A cozy, personalized operating system made for Aisha's Sweet 16 birthday.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

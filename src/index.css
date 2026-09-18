@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #FFFDF8;
+    --warm-cream: #FFFDF8;
+    --soft-ivory: #FAF8F5;
+    --soft-pink: #F8DDE4;
+    --main-pink: #E9A6B5;
+    --deep-pink: #D47F95;
+    --text-primary: #493D40;
+    --text-muted: #8E7B80;
+    --border-subtle: #EFE8EA;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: 'Lora', serif;
+  }
+}
+
+/* Subtle warm paper noise background overlay */
+.bg-grain {
+  background-image: radial-gradient(rgba(142, 123, 128, 0.045) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Custom scrollbar for cozy desktop aesthetics */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E8DDDF;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D47F95;
+}
+

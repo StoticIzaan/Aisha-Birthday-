@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Wifi, WifiOff, Volume2, VolumeX, BatteryCharging, Lock, Calendar as CalendarIcon, Heart } from 'lucide-react';
 import { AppId, AppMetadata } from '../types';
@@ -88,18 +88,26 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
     return checkIsSevenTwentyUnlocked(currentTime);
   }, [currentTime]);
 
+  // Track the previous unlock state so the app only auto-closes
+  // when the 7:20 window actually changes from unlocked to locked.
+  const previousSevenTwentyUnlockedRef = useRef(isSevenTwentyUnlocked);
+
   // Automatic relock:
   // Once the 7:20 unlock period ends, close the scene if it is currently open.
+  // IMPORTANT: Clicking the locked 7:20 icon after 9:20 must NOT immediately close it.
   useEffect(() => {
-  if (
-    activeApp === 'seventwenty' &&
-    isSevenTwentyUnlocked === false &&
-    currentTime.getHours() === 21 &&
-    currentTime.getMinutes() === 20
-  ) {
-    setActiveApp(null);
-  }
-}, [currentTime, isSevenTwentyUnlocked, activeApp]);
+    const wasUnlocked = previousSevenTwentyUnlockedRef.current;
+
+    if (
+      activeApp === 'seventwenty' &&
+      wasUnlocked &&
+      !isSevenTwentyUnlocked
+    ) {
+      setActiveApp(null);
+    }
+
+    previousSevenTwentyUnlockedRef.current = isSevenTwentyUnlocked;
+  }, [currentTime, isSevenTwentyUnlocked, activeApp]);
 
   // Format system time for taskbar in 12-hour clock format
   const formattedTime = useMemo(() => {

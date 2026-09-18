@@ -66,14 +66,17 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       const urlTimeParam = searchParams.get('previewTime') || searchParams.get('time');
+
       if (urlTimeParam) {
         // Can simulate time progressing from specified parameter
         const parsed = new Date(urlTimeParam);
+
         if (!isNaN(parsed.getTime())) {
           setCurrentTime(parsed);
           return;
         }
       }
+
       setCurrentTime(new Date());
     }, 1000);
 
@@ -85,26 +88,15 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
     return checkIsSevenTwentyUnlocked(currentTime);
   }, [currentTime]);
 
-  // Automatic relock rule:
-  // At exactly 9:20 PM: if the special scene is open, close it, return to normal desktop
+  // Automatic relock:
+  // Once the 7:20 unlock period ends, close the scene if it is currently open.
   useEffect(() => {
     if (activeApp === 'seventwenty' && !isSevenTwentyUnlocked) {
-      // Check if it's October 13, 2026 after 9:20 PM
-      const year = currentTime.getFullYear();
-      const month = currentTime.getMonth();
-      const date = currentTime.getDate();
-      const hours = currentTime.getHours();
-      const minutes = currentTime.getMinutes();
-
-      if (year === 2026 && month === 9 && date === 13) {
-        if (hours > 21 || (hours === 21 && minutes >= 20)) {
-          setActiveApp(null);
-        }
-      }
+      setActiveApp(null);
     }
   }, [currentTime, isSevenTwentyUnlocked, activeApp]);
 
-  // Format system time for taskbar in 12-hour clock format (e.g. 7:20:00 PM)
+  // Format system time for taskbar in 12-hour clock format
   const formattedTime = useMemo(() => {
     return currentTime.toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -144,12 +136,34 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
   const handleToggleSound = () => {
     const newMuted = toggleMute();
     setMutedState(newMuted);
+
     if (!newMuted) {
       playClick();
     }
   };
 
   const currentAppMeta = APPS.find((a) => a.id === activeApp);
+
+  /*
+   * Desktop-first icon positioning.
+   *
+   * The base layout is a 5-column x 2-row desktop grid.
+   * Each icon gets a tiny individual offset so the arrangement
+   * feels placed naturally on a desktop rather than perfectly
+   * snapped into a rigid grid.
+   */
+  const iconOffsets = [
+    { x: 0, y: 8 },
+    { x: 12, y: 22 },
+    { x: -4, y: 2 },
+    { x: 16, y: 14 },
+    { x: 4, y: 28 },
+    { x: -8, y: 12 },
+    { x: 10, y: 0 },
+    { x: 20, y: 22 },
+    { x: -5, y: 18 },
+    { x: 14, y: 7 },
+  ];
 
   return (
     <div
@@ -190,6 +204,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
           }}
           className="absolute -top-32 -left-20 w-[420px] h-[420px] rounded-full bg-[#FAF0F3] blur-3xl"
         />
+
         <motion.div
           animate={{
             scale: [1, 1.05, 1],
@@ -205,16 +220,19 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
           className="absolute -bottom-24 right-1/4 w-[480px] h-[480px] rounded-full bg-[#F7EDF0] blur-3xl"
         />
 
-        {/* Sparse illustrated desktop ornaments with gentle ambient breathing */}
+        {/* Sparse illustrated desktop ornaments */}
         <div className="absolute top-[22%] right-[28%] opacity-20">
           <Sparkle size={15} color="#D47F95" />
         </div>
+
         <div className="absolute top-[38%] right-[18%] opacity-15">
           <DoodleStar size={18} color="#D47F95" />
         </div>
+
         <div className="absolute bottom-[28%] right-[36%] opacity-15">
           <TinyHeart size={13} color="#E9A6B5" />
         </div>
+
         <div className="absolute top-[14%] right-[12%] opacity-15">
           <HandDrawnBow size={18} color="#D47F95" />
         </div>
@@ -224,6 +242,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
           <div className="font-serif text-3xl sm:text-5xl text-[#493D40]/75 tracking-tight font-normal">
             aisha
           </div>
+
           <div className="font-mono text-[10px] sm:text-xs tracking-[0.26em] text-[#8E7B80] uppercase mt-1">
             sweet sixteen • aisha os
           </div>
@@ -235,16 +254,19 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
         id="desktop-main-area"
         className="relative z-10 flex-1 w-full h-full p-5 sm:p-8 md:p-10 pb-16 sm:pb-20 overflow-hidden flex flex-col justify-start items-start"
       >
-        {/* Desktop Shortcuts - Real OS Column Arrangement with breathing room */}
+        {/* 
+          Desktop-first arrangement:
+          5 columns x 2 rows, with larger icons and subtle
+          individual offsets for a more natural scattered look.
+        */}
         <div
           id="desktop-shortcuts-area"
           onClick={(e) => e.stopPropagation()}
-          className="grid grid-flow-col grid-rows-5 gap-x-5 sm:gap-x-8 md:gap-x-10 gap-y-3 sm:gap-y-4 w-fit select-none"
+          className="grid grid-cols-5 grid-rows-2 gap-x-12 lg:gap-x-16 xl:gap-x-20 gap-y-10 lg:gap-y-12 xl:gap-y-14 w-fit select-none"
         >
           {APPS.map((app, index) => {
             const isSelected = selectedApp === app.id;
-            // Column 2 items have a very slight natural vertical offset for handcrafted organic desktop feel
-            const isColumn2 = index >= 5;
+            const offset = iconOffsets[index];
 
             return (
               <div
@@ -258,26 +280,31 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
                 onMouseEnter={() => {
                   playClick();
                 }}
-                className={`group w-22 sm:w-24 p-2 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-150 select-none ${
-                  isColumn2 ? 'mt-0.5' : ''
-                } ${
+                style={{
+                  transform: `translate(${offset.x}px, ${offset.y}px)`,
+                }}
+                className={`group w-28 lg:w-32 xl:w-34 p-3 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-150 select-none ${
                   isSelected
                     ? 'bg-[#E9A6B5]/22 border border-[#D47F95]/40 shadow-2xs'
                     : 'bg-transparent border border-transparent hover:bg-[#493D40]/[0.035] hover:border-[#493D40]/10'
                 } active:scale-[0.97]`}
               >
-                {/* Illustrated icon sitting directly on the desktop surface */}
-                <div className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center transition-transform duration-150 group-hover:-translate-y-0.5 group-active:translate-y-0 drop-shadow-[0_2px_4px_rgba(73,61,64,0.06)]">
+                {/* Larger illustrated icon */}
+                <div className="w-14 h-14 lg:w-16 lg:h-16 xl:w-[4.5rem] xl:h-[4.5rem] flex items-center justify-center transition-transform duration-150 group-hover:-translate-y-0.5 group-active:translate-y-0 drop-shadow-[0_2px_4px_rgba(73,61,64,0.06)]">
                   <DesktopIcon
                     id={app.id}
                     className="w-full h-full"
-                    isUnlocked={app.id === 'seventwenty' ? isSevenTwentyUnlocked : true}
+                    isUnlocked={
+                      app.id === 'seventwenty'
+                        ? isSevenTwentyUnlocked
+                        : true
+                    }
                   />
                 </div>
 
-                {/* Small application name underneath - direct typography on desktop */}
+                {/* Application name */}
                 <span
-                  className={`mt-1.5 text-[11px] sm:text-xs font-mono text-center leading-tight tracking-tight px-1 rounded truncate max-w-full ${
+                  className={`mt-2 text-[11px] lg:text-xs font-mono text-center leading-tight tracking-tight px-1 rounded truncate max-w-full ${
                     isSelected
                       ? 'text-[#493D40] font-semibold bg-[#D47F95]/15'
                       : 'text-[#493D40] font-medium group-hover:text-[#D47F95]'
@@ -308,7 +335,9 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
             aria-label="Return to Welcome Screen"
             className="h-8 px-2 sm:px-2.5 rounded-md bg-[#FFFDF8] hover:bg-[#FAF8F5] border border-[#E9A6B5]/60 hover:border-[#D47F95] active:scale-95 text-[#493D40] hover:text-[#D47F95] flex items-center gap-1.5 text-xs font-mono font-medium transition-all shadow-2xs cursor-pointer"
           >
-            <span className="text-sm leading-none font-bold text-[#D47F95]">⌂</span>
+            <span className="text-sm leading-none font-bold text-[#D47F95]">
+              ⌂
+            </span>
             <span className="hidden sm:inline">Start</span>
           </button>
 
@@ -319,6 +348,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
             <span className="font-semibold text-xs sm:text-[13px] text-[#493D40] tracking-wider font-mono">
               AISHA OS
             </span>
+
             <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-[#FAF8F5] border border-[#EFE8EA] text-[#D47F95]">
               16.0
             </span>
@@ -336,10 +366,17 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
               className="flex items-center gap-2 px-3 py-1 rounded-md bg-[#FAF8F5] border border-[#E9A6B5]/70 shadow-2xs relative text-xs font-mono font-medium text-[#493D40] max-w-[200px] sm:max-w-xs truncate cursor-pointer active:scale-98 transition-all"
             >
               <div className="w-3.5 h-3.5 flex-shrink-0">
-                <DesktopIcon id={activeApp} className="w-full h-full" isUnlocked={true} />
+                <DesktopIcon
+                  id={activeApp}
+                  className="w-full h-full"
+                  isUnlocked={true}
+                />
               </div>
-              <span className="truncate">{currentAppMeta?.label}</span>
-              {/* Active task indicator notch */}
+
+              <span className="truncate">
+                {currentAppMeta?.label}
+              </span>
+
               <span className="absolute -bottom-1 left-2.5 right-2.5 h-[2px] bg-[#D47F95] rounded-full" />
             </button>
           ) : (
@@ -354,7 +391,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
         <div className="flex items-center gap-2.5 sm:gap-4 text-xs text-[#8E7B80] flex-shrink-0">
           {/* System Status Indicators */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 text-[#8E7B80]">
-            {/* Fake Wi-Fi Gimmick Button */}
+            {/* Wi-Fi */}
             <button
               id="taskbar-wifi-btn"
               onClick={(e) => {
@@ -363,7 +400,11 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
                 setIsWifiMenuOpen((prev) => !prev);
                 setIsBatteryMenuOpen(false);
               }}
-              title={isWifiConnected ? "Wi-Fi: Connected (AishaNet_5G) — Click for networks" : "Wi-Fi: Disconnected — Click to connect"}
+              title={
+                isWifiConnected
+                  ? 'Wi-Fi: Connected (AishaNet_5G) — Click for networks'
+                  : 'Wi-Fi: Disconnected — Click to connect'
+              }
               className={`p-1 sm:p-1.5 rounded-md transition-colors cursor-pointer flex items-center ${
                 isWifiMenuOpen
                   ? 'bg-[#E9A6B5]/25 text-[#D47F95]'
@@ -377,11 +418,15 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
               )}
             </button>
 
-            {/* Interactive Sound Toggle */}
+            {/* Sound Toggle */}
             <button
               id="taskbar-sound-toggle"
               onClick={handleToggleSound}
-              title={muted ? 'Sound Muted (click to enable)' : 'Sound Enabled (click to mute)'}
+              title={
+                muted
+                  ? 'Sound Muted (click to enable)'
+                  : 'Sound Enabled (click to mute)'
+              }
               className="p-1 rounded-md hover:bg-[#FAF8F5] hover:text-[#493D40] transition-colors cursor-pointer flex items-center"
             >
               {muted ? (
@@ -391,7 +436,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
               )}
             </button>
 
-            {/* Battery Status & Percentage */}
+            {/* Battery */}
             <button
               id="taskbar-battery-btn"
               onClick={(e) => {
@@ -407,7 +452,11 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
                   : 'hover:bg-[#FAF8F5]'
               }`}
             >
-              <BatteryCharging size={14} className="text-[#D47F95] flex-shrink-0" />
+              <BatteryCharging
+                size={14}
+                className="text-[#D47F95] flex-shrink-0"
+              />
+
               <span className="text-[11px] font-mono font-semibold text-[#493D40]">
                 100%
               </span>
@@ -416,7 +465,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
 
           <div className="h-4 w-px bg-[#EFE8EA]" />
 
-          {/* Live System Time & Date (12-hour clock, click for interactive calendar) */}
+          {/* Live System Time & Date */}
           <button
             id="taskbar-system-time"
             onClick={(e) => {
@@ -433,7 +482,10 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
                 : 'hover:bg-[#FAF8F5] text-[#493D40]'
             }`}
           >
-            <span className="font-semibold text-[#493D40] tracking-tight">{formattedTime}</span>
+            <span className="font-semibold text-[#493D40] tracking-tight">
+              {formattedTime}
+            </span>
+
             <span className="hidden sm:inline text-[11px] text-[#8E7B80]">
               {formattedDate}
             </span>
@@ -441,7 +493,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
         </div>
       </footer>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━ FAKE WI-FI GIMMICK FLYOUT ━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━━━━━━━━━━━━━━━━━━ WI-FI FLYOUT ━━━━━━━━━━━━━━━━━━━━ */}
       <AnimatePresence>
         {isWifiMenuOpen && (
           <motion.div
@@ -453,12 +505,14 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
             onClick={(e) => e.stopPropagation()}
             className="fixed bottom-13 sm:bottom-14 right-3 sm:right-24 z-40 w-72 sm:w-80 bg-[#FFFDF8] border border-[#E2D8DA] rounded-xl shadow-[0_16px_40px_rgba(73,61,64,0.14)] p-3.5 text-xs font-mono text-[#493D40] select-none"
           >
-            {/* Header */}
             <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[#EFE8EA]">
               <div className="flex items-center gap-2">
                 <Wifi size={14} className="text-[#D47F95]" />
-                <span className="font-semibold text-xs text-[#493D40]">Wi-Fi Network</span>
+                <span className="font-semibold text-xs text-[#493D40]">
+                  Wi-Fi Network
+                </span>
               </div>
+
               <button
                 onClick={() => {
                   playClick();
@@ -476,22 +530,27 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
 
             {isWifiConnected ? (
               <div className="space-y-2.5">
-                {/* Active Connected Network */}
                 <div className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#E9A6B5]/50 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-xs flex items-center gap-1.5 text-[#493D40]">
                       <span className="w-2 h-2 rounded-full bg-[#96B88F] animate-pulse" />
                       AishaNet_5G
                     </span>
-                    <span className="text-[10px] text-[#D47F95] font-semibold">100% Signal</span>
+
+                    <span className="text-[10px] text-[#D47F95] font-semibold">
+                      100% Signal
+                    </span>
                   </div>
+
                   <div className="text-[10px] text-[#8E7B80] flex justify-between">
                     <span>Protocol: WPA3-Personal</span>
                     <span>IPv4: 16.10.20.26</span>
                   </div>
+
                   <div className="text-[10px] text-[#8E7B80]">
                     Speed: 1000 Mbps • Sweet Sixteen Band
                   </div>
+
                   <button
                     onClick={() => {
                       playClick();
@@ -503,17 +562,33 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
                   </button>
                 </div>
 
-                {/* Other Available Networks */}
                 <div className="pt-0.5">
                   <div className="text-[10px] text-[#8E7B80] uppercase tracking-wider mb-1.5 px-0.5 font-semibold">
                     Available Networks
                   </div>
+
                   <div className="space-y-1">
                     {[
-                      { name: 'ColdBrew_Lovers_5G', secured: true, strength: '95%' },
-                      { name: 'Hibiscus_Garden_WiFi', secured: true, strength: '89%' },
-                      { name: 'FutureDoctorAisha_Guest', secured: true, strength: '92%' },
-                      { name: 'BirthdayBalloons_Free', secured: false, strength: '100%' },
+                      {
+                        name: 'ColdBrew_Lovers_5G',
+                        secured: true,
+                        strength: '95%',
+                      },
+                      {
+                        name: 'Hibiscus_Garden_WiFi',
+                        secured: true,
+                        strength: '89%',
+                      },
+                      {
+                        name: 'FutureDoctorAisha_Guest',
+                        secured: true,
+                        strength: '92%',
+                      },
+                      {
+                        name: 'BirthdayBalloons_Free',
+                        secured: false,
+                        strength: '100%',
+                      },
                     ].map((network) => (
                       <div
                         key={network.name}
@@ -524,11 +599,25 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
                         className="flex items-center justify-between p-1.5 rounded hover:bg-[#FAF8F5] cursor-pointer transition-colors"
                       >
                         <div className="flex items-center gap-1.5 truncate">
-                          <Wifi size={12} className="text-[#8E7B80] flex-shrink-0" />
-                          <span className="truncate text-[11px] text-[#493D40]">{network.name}</span>
+                          <Wifi
+                            size={12}
+                            className="text-[#8E7B80] flex-shrink-0"
+                          />
+
+                          <span className="truncate text-[11px] text-[#493D40]">
+                            {network.name}
+                          </span>
                         </div>
+
                         <div className="flex items-center gap-1 text-[10px] text-[#8E7B80] flex-shrink-0">
-                          {network.secured ? <Lock size={10} /> : <span className="text-[9px] text-[#96B88F]">Open</span>}
+                          {network.secured ? (
+                            <Lock size={10} />
+                          ) : (
+                            <span className="text-[9px] text-[#96B88F]">
+                              Open
+                            </span>
+                          )}
+
                           <span>{network.strength}</span>
                         </div>
                       </div>
@@ -538,8 +627,15 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
               </div>
             ) : (
               <div className="p-4 text-center">
-                <WifiOff size={22} className="mx-auto text-[#8E7B80] mb-2" />
-                <p className="text-xs text-[#8E7B80] mb-2.5">Wi-Fi is currently disconnected.</p>
+                <WifiOff
+                  size={22}
+                  className="mx-auto text-[#8E7B80] mb-2"
+                />
+
+                <p className="text-xs text-[#8E7B80] mb-2.5">
+                  Wi-Fi is currently disconnected.
+                </p>
+
                 <button
                   onClick={() => {
                     playClick();
@@ -555,7 +651,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
         )}
       </AnimatePresence>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━ BATTERY GIMMICK FLYOUT ━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━━━━━━━━━━━━━━━━━━ BATTERY FLYOUT ━━━━━━━━━━━━━━━━━━━━ */}
       <AnimatePresence>
         {isBatteryMenuOpen && (
           <motion.div
@@ -572,6 +668,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
                 <BatteryCharging size={14} className="text-[#D47F95]" />
                 <span>Battery & Power</span>
               </span>
+
               <span className="text-[10px] font-bold text-[#D47F95] px-1.5 py-0.5 rounded bg-[#FAF0F3] border border-[#E9A6B5]/60">
                 100% Charged
               </span>
@@ -580,23 +677,40 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
             <div className="space-y-2.5">
               <div className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#EFE8EA] flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#8E7B80]">Power Status:</span>
-                  <span className="font-semibold text-[11px] text-[#96B88F]">Sweet 16 Edition</span>
+                  <span className="text-[11px] text-[#8E7B80]">
+                    Power Status:
+                  </span>
+
+                  <span className="font-semibold text-[11px] text-[#96B88F]">
+                    Sweet 16 Edition
+                  </span>
                 </div>
+
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#8E7B80]">Condition:</span>
-                  <span className="font-semibold text-[11px] text-[#493D40]">Peak Performance</span>
+                  <span className="text-[11px] text-[#8E7B80]">
+                    Condition:
+                  </span>
+
+                  <span className="font-semibold text-[11px] text-[#493D40]">
+                    Peak Performance
+                  </span>
                 </div>
+
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#8E7B80]">Remaining:</span>
-                  <span className="font-semibold text-[11px] text-[#D47F95]">All Day Long</span>
+                  <span className="text-[11px] text-[#8E7B80]">
+                    Remaining:
+                  </span>
+
+                  <span className="font-semibold text-[11px] text-[#D47F95]">
+                    All Day Long
+                  </span>
                 </div>
               </div>
 
-              {/* Visual Progress Bar */}
               <div className="w-full bg-[#EFE8EA] rounded-full h-2 overflow-hidden">
                 <div className="bg-[#D47F95] h-full rounded-full w-full" />
               </div>
+
               <p className="text-[10px] text-[#8E7B80] text-center pt-0.5">
                 Cycle count: 16 • Battery health: 100%
               </p>
@@ -617,19 +731,21 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
             onClick={(e) => e.stopPropagation()}
             className="fixed bottom-13 sm:bottom-14 right-2 sm:right-4 z-40 w-76 sm:w-80 bg-[#FFFDF8] border border-[#E2D8DA] rounded-xl shadow-[0_16px_40px_rgba(73,61,64,0.14)] p-4 text-xs font-mono text-[#493D40] select-none"
           >
-            {/* Header: Month & Sweet 16 highlight */}
             <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[#EFE8EA]">
               <div className="flex items-center gap-2">
                 <CalendarIcon size={14} className="text-[#D47F95]" />
-                <span className="font-semibold text-xs text-[#493D40]">October 2026</span>
+
+                <span className="font-semibold text-xs text-[#493D40]">
+                  October 2026
+                </span>
               </div>
+
               <span className="text-[10px] font-bold text-[#D47F95] px-1.5 py-0.5 rounded bg-[#FAF0F3] border border-[#E9A6B5]/60 flex items-center gap-1">
                 <Heart size={9} className="fill-[#D47F95]" />
                 Aisha's Month
               </span>
             </div>
 
-            {/* Days of the week header */}
             <div className="grid grid-cols-7 gap-1 text-center font-semibold text-[10px] text-[#8E7B80] mb-1.5">
               <span>Su</span>
               <span>Mo</span>
@@ -640,18 +756,29 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
               <span>Sa</span>
             </div>
 
-            {/* October 2026 Calendar Grid (Oct 1 is Thursday -> 4 empty padding cells: Sun, Mon, Tue, Wed) */}
             <div className="grid grid-cols-7 gap-1 text-center text-xs">
-              {/* Previous month trailing days (padding) */}
-              <span className="py-1 text-[#8E7B80]/30 text-[10px]">27</span>
-              <span className="py-1 text-[#8E7B80]/30 text-[10px]">28</span>
-              <span className="py-1 text-[#8E7B80]/30 text-[10px]">29</span>
-              <span className="py-1 text-[#8E7B80]/30 text-[10px]">30</span>
+              <span className="py-1 text-[#8E7B80]/30 text-[10px]">
+                27
+              </span>
 
-              {/* October days 1 to 31 */}
+              <span className="py-1 text-[#8E7B80]/30 text-[10px]">
+                28
+              </span>
+
+              <span className="py-1 text-[#8E7B80]/30 text-[10px]">
+                29
+              </span>
+
+              <span className="py-1 text-[#8E7B80]/30 text-[10px]">
+                30
+              </span>
+
               {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
                 const isOct13 = day === 13;
-                const isSelectedOrCurrent = currentTime.getDate() === day && currentTime.getMonth() === 9; // Month 9 is October (0-indexed)
+
+                const isSelectedOrCurrent =
+                  currentTime.getDate() === day &&
+                  currentTime.getMonth() === 9;
 
                 if (isOct13) {
                   return (
@@ -660,7 +787,10 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
                       title="October 13: Aisha's 16th Birthday!"
                       className="relative py-1 rounded-md bg-[#FAF0F3] border border-[#E9A6B5] text-[#D47F95] font-bold flex flex-col items-center justify-center cursor-default shadow-2xs group"
                     >
-                      <span className="leading-none">{day}</span>
+                      <span className="leading-none">
+                        {day}
+                      </span>
+
                       <span className="absolute -top-1 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#D47F95]" />
                     </div>
                   );
@@ -681,18 +811,21 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
               })}
             </div>
 
-            {/* Special Birthday Note Banner inside Calendar */}
             <div className="mt-3 pt-2.5 border-t border-[#EFE8EA] flex items-center gap-2 text-[10px] text-[#8E7B80]">
               <div className="w-2 h-2 rounded-full bg-[#D47F95] flex-shrink-0" />
+
               <span className="leading-tight">
-                <strong className="text-[#493D40]">Oct 13:</strong> Aisha's Sweet Sixteen ✨
+                <strong className="text-[#493D40]">
+                  Oct 13:
+                </strong>{' '}
+                Aisha's Sweet Sixteen ✨
               </span>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━ APPLICATION WINDOW OVERLAY ━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━━━━━━━━━━━━━━━━━━ APPLICATION WINDOW ━━━━━━━━━━━━━━━━━━━━ */}
       <WindowFrame
         isOpen={activeApp !== null}
         onClose={handleCloseApp}
@@ -708,6 +841,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onReturnHome }) => {
         {activeApp === 'dimples' && <DimplesApp />}
         {activeApp === 'travel' && <TravelApp />}
         {activeApp === 'mirror' && <MirrorApp />}
+
         {activeApp === 'seventwenty' && (
           <SevenTwentyApp
             isUnlocked={isSevenTwentyUnlocked}

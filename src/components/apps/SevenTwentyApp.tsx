@@ -50,21 +50,27 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
   useEffect(() => {
     const updateTick = () => {
       let now = new Date();
+
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const testTime = params.get('previewTime') || params.get('time');
+
         if (testTime) {
           const parsed = new Date(testTime);
+
           if (!isNaN(parsed.getTime())) {
             now = parsed;
           }
         }
       }
+
       setCurrentDate(now);
     };
 
     updateTick();
+
     const timer = setInterval(updateTick, 500);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -73,13 +79,18 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
     if (typeof propIsUnlocked === 'boolean') {
       return propIsUnlocked;
     }
+
     return checkIsSevenTwentyUnlocked(currentDate);
   }, [propIsUnlocked, currentDate]);
 
-  // Handle automatic relock at exactly 9:20 PM:
+  // Handle automatic relock at exactly 9:20 PM
   // If the special scene was open and the active window ends, trigger onAutoRelock
   useEffect(() => {
-    const totalSec = currentDate.getHours() * 3600 + currentDate.getMinutes() * 60 + currentDate.getSeconds();
+    const totalSec =
+      currentDate.getHours() * 3600 +
+      currentDate.getMinutes() * 60 +
+      currentDate.getSeconds();
+
     const endSeconds = 21 * 3600 + 20 * 60; // 9:20:00 PM
 
     if (totalSec >= endSeconds) {
@@ -93,9 +104,11 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
   useEffect(() => {
     if (isUnlocked) {
       playClockUnlockChime();
+
       const timer = setTimeout(() => {
         setHandsSettled(true);
       }, 700);
+
       return () => clearTimeout(timer);
     } else {
       setHandsSettled(false);
@@ -141,6 +154,7 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
             <p className="font-serif text-xl sm:text-2xl font-normal text-[#493D40]">
               not yet
             </p>
+
             <p className="text-sm sm:text-base text-[#8E7B80] font-normal font-sans">
               come back at 7:20
             </p>
@@ -160,12 +174,15 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
           <div className="absolute top-4 left-6 pointer-events-none opacity-30">
             <Sparkle size={18} color="#D47F95" />
           </div>
+
           <div className="absolute top-6 right-8 pointer-events-none opacity-30">
             <TinyHeart size={16} color="#E9A6B5" />
           </div>
+
           <div className="absolute bottom-6 left-10 pointer-events-none opacity-25">
             <Sparkle size={14} color="#D47F95" />
           </div>
+
           <div className="absolute bottom-8 right-12 pointer-events-none opacity-25">
             <TinyHeart size={14} color="#E9A6B5" />
           </div>
@@ -180,7 +197,11 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
             {/* Warm subtle halo glow */}
             <div className="absolute inset-0 rounded-full bg-[#FAF0F3]/30 blur-xl scale-110 pointer-events-none" />
 
-            <svg viewBox="0 0 200 200" className="w-full h-full relative z-10" fill="none">
+            <svg
+              viewBox="0 0 200 200"
+              className="w-full h-full relative z-10"
+              fill="none"
+            >
               {/* Clock Outer Rim */}
               <circle
                 cx="100"
@@ -190,6 +211,7 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
                 stroke="#493D40"
                 strokeWidth="2.8"
               />
+
               <circle
                 cx="100"
                 cy="100"
@@ -205,10 +227,13 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
                 const isQuarter = i % 3 === 0;
                 const rOuter = 82;
                 const rInner = isQuarter ? 68 : 74;
+
                 const x1 = 100 + rOuter * Math.sin(angle);
                 const y1 = 100 - rOuter * Math.cos(angle);
+
                 const x2 = 100 + rInner * Math.sin(angle);
                 const y2 = 100 - rInner * Math.cos(angle);
+
                 return (
                   <line
                     key={i}
@@ -235,6 +260,7 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
               >
                 12
               </text>
+
               <text
                 x="162"
                 y="104"
@@ -246,6 +272,7 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
               >
                 3
               </text>
+
               <text
                 x="100"
                 y="166"
@@ -257,6 +284,7 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
               >
                 6
               </text>
+
               <text
                 x="38"
                 y="104"
@@ -269,7 +297,7 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
                 9
               </text>
 
-              {/* Hour Hand: Settles at 220 degrees (7:20 PM) */}
+              {/* Hour Hand: precisely points to 7 at 7:20 */}
               <motion.line
                 x1="100"
                 y1="100"
@@ -278,13 +306,21 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
                 stroke="#493D40"
                 strokeWidth="3.5"
                 strokeLinecap="round"
-                initial={{ rotate: 180 }}
-                animate={{ rotate: 220 }}
-                transition={{ duration: 1.4, ease: [0.34, 1.3, 0.64, 1] }}
-                style={{ transformOrigin: '100px 100px' }}
+                initial={{
+                  x2: 100,
+                  y2: 54,
+                }}
+                animate={{
+                  x2: 70,
+                  y2: 135,
+                }}
+                transition={{
+                  duration: 1.4,
+                  ease: [0.34, 1.3, 0.64, 1],
+                }}
               />
 
-              {/* Minute Hand: Settles at 120 degrees (20 min mark) */}
+              {/* Minute Hand: precisely points to 4 at 20 minutes */}
               <motion.line
                 x1="100"
                 y1="100"
@@ -293,22 +329,44 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
                 stroke="#D47F95"
                 strokeWidth="2.6"
                 strokeLinecap="round"
-                initial={{ rotate: 0 }}
-                animate={{ rotate: 120 }}
-                transition={{ duration: 1.7, ease: [0.34, 1.3, 0.64, 1] }}
-                style={{ transformOrigin: '100px 100px' }}
+                initial={{
+                  x2: 100,
+                  y2: 34,
+                }}
+                animate={{
+                  x2: 157,
+                  y2: 133,
+                }}
+                transition={{
+                  duration: 1.7,
+                  ease: [0.34, 1.3, 0.64, 1],
+                }}
               />
 
               {/* Center Pivot */}
-              <circle cx="100" cy="100" r="5" fill="#D47F95" />
-              <circle cx="100" cy="100" r="2" fill="#FFFDF8" />
+              <circle
+                cx="100"
+                cy="100"
+                r="5"
+                fill="#D47F95"
+              />
+
+              <circle
+                cx="100"
+                cy="100"
+                r="2"
+                fill="#FFFDF8"
+              />
             </svg>
           </motion.div>
 
           {/* Special Scene Text */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: handsSettled ? 1 : 0, y: handsSettled ? 0 : 12 }}
+            animate={{
+              opacity: handsSettled ? 1 : 0,
+              y: handsSettled ? 0 : 12,
+            }}
             transition={{ duration: 0.6 }}
             className="space-y-4"
           >

@@ -10,6 +10,12 @@ interface Screen2Props {
 export const Screen2: React.FC<Screen2Props> = ({ onEnter }) => {
   const handleEnter = () => {
     playChime();
+
+    // Request real browser fullscreen when entering the desktop
+    if (document.documentElement.requestFullscreen) {
+      void document.documentElement.requestFullscreen().catch(() => {});
+    }
+
     onEnter();
   };
 
@@ -26,6 +32,7 @@ export const Screen2: React.FC<Screen2Props> = ({ onEnter }) => {
       <div className="absolute top-16 right-24 opacity-25 pointer-events-none hidden md:block">
         <Sparkle size={18} color="#D47F95" />
       </div>
+
       <div className="absolute bottom-20 left-20 opacity-20 pointer-events-none hidden md:block">
         <TinyHeart size={16} color="#E9A6B5" />
       </div>
@@ -40,9 +47,11 @@ export const Screen2: React.FC<Screen2Props> = ({ onEnter }) => {
         {/* Centralized Header Badge */}
         <div className="flex items-center justify-center gap-2 mb-8 pb-5 border-b border-[#EFE8EA]">
           <span className="w-2 h-2 rounded-full bg-[#E9A6B5]" />
+
           <span className="text-xs font-semibold tracking-widest text-[#8E7B80] uppercase font-mono">
             System Boot • Aisha OS
           </span>
+
           <span className="w-2 h-2 rounded-full bg-[#E9A6B5]" />
         </div>
 

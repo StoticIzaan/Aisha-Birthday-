@@ -14,8 +14,10 @@ export const checkIsSevenTwentyUnlocked = (dateInput?: Date): boolean => {
   if (!dateInput && typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);
     const testTime = params.get('previewTime') || params.get('time');
+
     if (testTime) {
       const parsed = new Date(testTime);
+
       if (!isNaN(parsed.getTime())) {
         now = parsed;
       }
@@ -25,12 +27,19 @@ export const checkIsSevenTwentyUnlocked = (dateInput?: Date): boolean => {
   const hours = now.getHours();
   const minutes = now.getMinutes();
   const seconds = now.getSeconds();
-  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
+  const totalSeconds =
+    hours * 3600 +
+    minutes * 60 +
+    seconds;
 
   const startSeconds = 19 * 3600 + 20 * 60; // 19:20:00 (7:20 PM)
-  const endSeconds = 21 * 3600 + 20 * 60;   // 21:20:00 (9:20 PM)
+  const endSeconds = 21 * 3600 + 20 * 60; // 21:20:00 (9:20 PM)
 
-  return totalSeconds >= startSeconds && totalSeconds < endSeconds;
+  return (
+    totalSeconds >= startSeconds &&
+    totalSeconds < endSeconds
+  );
 };
 
 interface SevenTwentyAppProps {
@@ -43,7 +52,10 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
   onAutoRelock,
 }) => {
   // Live dynamic time state inside SevenTwentyApp
-  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(
+    () => new Date()
+  );
+
   const [handsSettled, setHandsSettled] = useState(false);
 
   // Dynamic interval to check the system clock every 500ms
@@ -52,8 +64,12 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
       let now = new Date();
 
       if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const testTime = params.get('previewTime') || params.get('time');
+        const params = new URLSearchParams(
+          window.location.search
+        );
+
+        const testTime =
+          params.get('previewTime') || params.get('time');
 
         if (testTime) {
           const parsed = new Date(testTime);
@@ -83,22 +99,25 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
     return checkIsSevenTwentyUnlocked(currentDate);
   }, [propIsUnlocked, currentDate]);
 
-  // Handle automatic relock at exactly 9:20 PM
-  // If the special scene was open and the active window ends, trigger onAutoRelock
+  // Track the previous unlock state.
+  // This ensures the window only auto-closes when it actually
+  // transitions from unlocked -> locked.
+  //
+  // IMPORTANT:
+  // If the user opens the app AFTER 9:20, both the previous
+  // state and current state are locked, so the locked message
+  // stays visible instead of immediately closing.
+  const previousUnlockedRef = React.useRef(isUnlocked);
+
   useEffect(() => {
-    const totalSec =
-      currentDate.getHours() * 3600 +
-      currentDate.getMinutes() * 60 +
-      currentDate.getSeconds();
-
-    const endSeconds = 21 * 3600 + 20 * 60; // 9:20:00 PM
-
-    if (totalSec >= endSeconds) {
+    if (previousUnlockedRef.current && !isUnlocked) {
       if (onAutoRelock) {
         onAutoRelock();
       }
     }
-  }, [currentDate, onAutoRelock]);
+
+    previousUnlockedRef.current = isUnlocked;
+  }, [isUnlocked, onAutoRelock]);
 
   // Settle clock hands once unlocked
   useEffect(() => {
@@ -129,7 +148,11 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
         >
           {/* Subtle lock illustration */}
           <div className="w-16 h-16 rounded-full bg-[#FAF8F5] border border-[#EFE8EA] flex items-center justify-center mb-6 shadow-2xs">
-            <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none">
+            <svg
+              viewBox="0 0 24 24"
+              className="w-8 h-8"
+              fill="none"
+            >
               <rect
                 x="4"
                 y="10"
@@ -140,13 +163,20 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
                 stroke="#493D40"
                 strokeWidth="1.8"
               />
+
               <path
                 d="M8 10V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V10"
                 stroke="#493D40"
                 strokeWidth="1.8"
                 strokeLinecap="round"
               />
-              <circle cx="12" cy="15" r="1.5" fill="#493D40" />
+
+              <circle
+                cx="12"
+                cy="15"
+                r="1.5"
+                fill="#493D40"
+              />
             </svg>
           </div>
 
@@ -167,7 +197,10 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.94 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{
+            duration: 0.5,
+            ease: [0.16, 1, 0.3, 1],
+          }}
           className="flex flex-col items-center justify-center p-6 sm:p-10 text-center max-w-lg mx-auto relative"
         >
           {/* Floating subtle celebratory accents */}
@@ -191,7 +224,10 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={{
+              duration: 0.8,
+              ease: [0.16, 1, 0.3, 1],
+            }}
             className="relative w-48 h-48 sm:w-56 sm:h-56 mb-8 flex items-center justify-center"
           >
             {/* Warm subtle halo glow */}
@@ -223,16 +259,29 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
 
               {/* 12 Hour Ticks */}
               {Array.from({ length: 12 }).map((_, i) => {
-                const angle = (i * 30 * Math.PI) / 180;
+                const angle =
+                  (i * 30 * Math.PI) / 180;
+
                 const isQuarter = i % 3 === 0;
+
                 const rOuter = 82;
                 const rInner = isQuarter ? 68 : 74;
 
-                const x1 = 100 + rOuter * Math.sin(angle);
-                const y1 = 100 - rOuter * Math.cos(angle);
+                const x1 =
+                  100 +
+                  rOuter * Math.sin(angle);
 
-                const x2 = 100 + rInner * Math.sin(angle);
-                const y2 = 100 - rInner * Math.cos(angle);
+                const y1 =
+                  100 -
+                  rOuter * Math.cos(angle);
+
+                const x2 =
+                  100 +
+                  rInner * Math.sin(angle);
+
+                const y2 =
+                  100 -
+                  rInner * Math.cos(angle);
 
                 return (
                   <line
@@ -241,8 +290,14 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
                     y1={y1}
                     x2={x2}
                     y2={y2}
-                    stroke={isQuarter ? '#493D40' : '#8E7B80'}
-                    strokeWidth={isQuarter ? 2.5 : 1.5}
+                    stroke={
+                      isQuarter
+                        ? '#493D40'
+                        : '#8E7B80'
+                    }
+                    strokeWidth={
+                      isQuarter ? 2.5 : 1.5
+                    }
                     strokeLinecap="round"
                   />
                 );
@@ -362,7 +417,10 @@ export const SevenTwentyApp: React.FC<SevenTwentyAppProps> = ({
 
           {/* Special Scene Text */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{
+              opacity: 0,
+              y: 12,
+            }}
             animate={{
               opacity: handsSettled ? 1 : 0,
               y: handsSettled ? 0 : 12,
